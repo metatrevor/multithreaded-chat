@@ -3,6 +3,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <errno.h>
 #include "server.h"
 
 int server_sockfd, client_sockfd;
@@ -204,21 +205,21 @@ int main(int argc, char *argv[])
 
     /* bind address with socket */
     if (bind(server_sockfd, (struct sockaddr *) &server_addr, sizeof(struct sockaddr)) == -1) {
-        fprintf(stderr, "bind() failed ...\n");
-        return -1;
+        fprintf(stderr, "bind() failed ...\n %s", strerror(errno));
+        exit(EXIT_FAILURE);
     };
 
     /* initiate interrupt handler for IO controlling */
     printf("Starting admin interface...\n");
     if (pthread_create(&interrupt, NULL, console_handler, NULL) != 0) {
         fprintf(stderr, "pthread_create() failed...\n");
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
     /* start listening for connections */
     if (listen(server_sockfd, 10) == -1) {
-        fprintf(stderr, "listen() failed...\n");
-        return -1;
+        fprintf(stderr, "listen() failed...\n %s", strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     printf("Listening for client connections...\n");
@@ -226,8 +227,8 @@ int main(int argc, char *argv[])
     while (1) {
         addr_size = sizeof(struct sockaddr_in);
         if ((client_sockfd = accept(server_sockfd, (struct sockaddr *) &client_addr, (socklen_t *) &addr_size)) == -1) {
-            fprintf(stderr, "accept() failed...\n");
-            return -1;
+            fprintf(stderr, "accept() failed...\n %s", strerror(errno));
+            exit(EXIT_FAILURE);
         }
         else {
 
